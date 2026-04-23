@@ -16,10 +16,6 @@ An interactive R Shiny app that visualises character co-occurrence networks for 
 - **Character timeline**: dotplot showing who appears when, coloured by whether they have appeared yet at the current scene
 - **Auto-installs** any missing R packages on first run
 
-## Screenshot
-
-> _Add a screenshot here once the app is running — `Tools > Publish > Take screenshot` in RStudio, or use `webshot2::appshot()`._
-
 ## Quick start
 
 ```r
