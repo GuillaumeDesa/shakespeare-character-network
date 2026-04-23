@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use this app in teaching or research, please cite it as below."
+type: software
+title: "Shakespeare Character Networks"
+abstract: >
+  An interactive R Shiny application that visualises character co-occurrence
+  networks for Shakespeare plays. Texts are fetched live from Project Gutenberg
+  via the gutenbergr package. The network renderer uses visNetwork with
+  Barnes-Hut physics and encodes degree and betweenness centrality visually.
+license: CC-BY-NC-ND-4.0
+repository-code: "https://github.com/YOUR_USERNAME/shakespeare-networks"
+keywords:
+  - Shakespeare
+  - character networks
+  - co-occurrence
+  - social network analysis
+  - digital humanities
+  - R
+  - Shiny
+  - visualisation
+authors:
+  - name: "YOUR NAME"
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+date-released: "2025"
+references:
+  - type: software
+    title: "gutenbergr: Download and Process Public Domain Works from Project Gutenberg"
+    authors:
+      - family-names: Robinson
+        given-names: David
+    url: "https://CRAN.R-project.org/package=gutenbergr"
+  - type: article
+    title: "Examining the arc of 100,000 stories: a tidy analysis"
+    authors:
+      - family-names: Robinson
+        given-names: David
+    year: 2017
+    url: "http://varianceexplained.org/r/tidytext-plots/"
+    notes: "Original inspiration for the Macbeth network analysis"
