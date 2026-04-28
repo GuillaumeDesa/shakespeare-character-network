@@ -1,5 +1,5 @@
 # Shakespeare Character Networks
-# Single-file Shiny app — run with: shiny::runApp("app.R")
+# Single-file Shiny app — run with: shiny::runApp("path/to/folder/Shakespeare_network.R")
 
 # ── Auto-install missing packages ─────────────────────────────────────────────
 required_packages <- c(
@@ -48,14 +48,22 @@ SHAKESPEARE_PLAYS <- c(
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 parse_play <- function(raw_lines) {
+  # Scene headers vary across Gutenberg editions:
+  #   "SCENE I."        (all-caps, own line)       — e.g. Macbeth 1533
+  #   "Scene I."        (title-case, own line)      — e.g. Hamlet 1524
+  #   "  Scene I. ..."  (indented, location follows on same line)
+  #   "ACT I"           (act-only lines — NOT a scene boundary on their own)
+  # Strategy: treat any line whose first non-space token is SCENE/Scene
+  # as a scene boundary.  ACT-only lines are not counted as scenes
+  # (they sit between scenes and would inflate the count to 5 for a 5-act play).
   tibble(raw = raw_lines) %>%
     mutate(
       is_scene = str_detect(raw, regex(
-        "^(ACT|SCENE|Act|Scene)\\s+[IVXLC0-9\\.]+", ignore_case = FALSE
+        "^\\s*scene\\s+[ivxlc0-9]+", ignore_case = TRUE
       )),
       scene = cumsum(is_scene)
     ) %>%
-    filter(!is_scene, raw != "", !str_detect(raw, "^\\[")) %>%
+    filter(!is_scene, raw != "", !str_detect(raw, "^\\s*\\[")) %>%
     mutate(
       speaker_raw = str_match(raw, "^([A-Z][A-Z ]{1,30}[A-Z])[.:]")[, 2],
       dialogue    = str_replace(raw, "^[A-Z][A-Z ]{1,30}[A-Z][.:]\\s*", "")
@@ -123,43 +131,63 @@ build_timeline <- function(lines) {
 # ── UI ────────────────────────────────────────────────────────────────────────
 
 ui <- page_sidebar(
-  title = "Shakespeare Character Networks",
+  title = tags$span(
+    style = "font-family: 'Inter', sans-serif; font-weight: 700;
+             letter-spacing: -0.03em; font-size: 1.25rem;",
+    "Shakespeare Character Networks"
+  ),
   theme = bs_theme(
     bootswatch   = "flatly",
     primary      = "#4e79a7",
     base_font    = font_google("Lato"),
-    heading_font = font_google("Playfair Display")
+    heading_font = font_google("Inter")
   ),
-  
+  tags$head(
+    tags$link(
+      rel  = "stylesheet",
+      href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
+    ),
+    tags$script(HTML("
+      Shiny.addCustomMessageHandler('downloadNetwork', function(filename) {
+        var canvas = document.querySelector('#networkPlot canvas');
+        if (!canvas) { alert('Network not ready yet.'); return; }
+        var link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    "))
+  ),
+
   sidebar = sidebar(
     width = 290,
-    
+
     selectInput(
       "play_id",
       label    = "Choose a play",
       choices  = SHAKESPEARE_PLAYS,
       selected = 1533
     ),
-    
+
     hr(),
-    
+
     sliderInput("scene",
-                label = "Scene (cumulative network up to…)",
-                min = 1, max = 28, value = 10, step = 1, ticks = FALSE
+      label = "Scene (cumulative network up to…)",
+      min = 1, max = 28, value = 10, step = 1, ticks = FALSE
     ),
-    
+
     sliderInput("min_cooc",
-                label = "Minimum co-appearances (edge filter)",
-                min = 1, max = 10, value = 1, step = 1, ticks = FALSE
+      label = "Minimum co-appearances (edge filter)",
+      min = 1, max = 10, value = 1, step = 1, ticks = FALSE
     ),
-    
+
     helpText(
       "Increase to reduce hairball density: only character pairs",
       "sharing at least this many scenes will be shown."
     ),
-    
+
     hr(),
-    
+
     tags$small(
       tags$b("How to read the network:"),
       tags$ul(
@@ -169,9 +197,9 @@ ui <- page_sidebar(
         tags$li("Hover a node or edge for details")
       )
     ),
-    
+
     hr(),
-    
+
     tags$small(
       "Texts from ",
       tags$a("Project Gutenberg", href = "https://www.gutenberg.org",
@@ -181,19 +209,33 @@ ui <- page_sidebar(
              target = "_blank"), "."
     )
   ),
-  
+
   layout_columns(
-    col_widths = 12,
+    col_widths = c(7, 5),
     card(
-      card_header("Character co-occurrence network"),
+      card_header(
+        class = "d-flex justify-content-between align-items-center",
+        "Character co-occurrence network",
+        actionButton(
+          "exportNetwork", label = "PNG", icon = icon("download"),
+          class = "btn btn-sm btn-outline-secondary py-0"
+        )
+      ),
       card_body(padding = 0,
-                visNetworkOutput("networkPlot", width = "100%", height = "440px")
+        visNetworkOutput("networkPlot", width = "100%", height = "72vh")
       )
     ),
     card(
-      card_header("Character timeline"),
-      card_body(
-        plotOutput("timelinePlot", width = "100%", height = "380px")
+      card_header(
+        class = "d-flex justify-content-between align-items-center",
+        "Character timeline",
+        downloadButton(
+          "exportTimeline", label = "PNG",
+          class = "btn btn-sm btn-outline-secondary py-0"
+        )
+      ),
+      card_body(padding = "0.5rem",
+        plotOutput("timelinePlot", width = "100%", height = "72vh")
       )
     )
   )
@@ -202,7 +244,7 @@ ui <- page_sidebar(
 # ── Server ────────────────────────────────────────────────────────────────────
 
 server <- function(input, output, session) {
-  
+
   play_data <- eventReactive(input$play_id, {
     req(input$play_id)
     withProgress(message = "Fetching play from Project Gutenberg…", {
@@ -227,29 +269,29 @@ server <- function(input, output, session) {
       list(lines = lines, cooc = cooc, timeline = tl, n_scenes = length(cooc))
     })
   }, ignoreNULL = FALSE)
-  
+
   observe({
     pd <- play_data()
     req(!is.null(pd))
     updateSliderInput(session, "scene",
-                      max   = pd$n_scenes,
-                      value = min(input$scene, pd$n_scenes)
+      max   = pd$n_scenes,
+      value = min(input$scene, pd$n_scenes)
     )
   })
-  
+
   output$networkPlot <- renderVisNetwork({
     pd <- play_data()
     req(!is.null(pd), input$scene <= pd$n_scenes)
-    
+
     edges_raw <- pd$cooc[[input$scene]] %>% filter(scenes >= input$min_cooc)
-    
+
     if (nrow(edges_raw) == 0) {
       return(visNetwork(
         nodes = data.frame(id = 1, label = "(no connections yet)"),
         edges = data.frame()
       ))
     }
-    
+
     g   <- graph_from_data_frame(
       edges_raw %>% rename(weight = scenes),
       directed = FALSE,
@@ -258,7 +300,7 @@ server <- function(input, output, session) {
     )
     deg <- degree(g)
     btw <- betweenness(g, normalized = TRUE)
-    
+
     nodes <- data.frame(
       id    = V(g)$name,
       label = V(g)$name,
@@ -271,7 +313,7 @@ server <- function(input, output, session) {
       ],
       stringsAsFactors = FALSE
     )
-    
+
     edges <- edges_raw %>%
       transmute(
         from  = as.character(Source),
@@ -279,7 +321,7 @@ server <- function(input, output, session) {
         value = scenes,
         title = paste0("Co-appearances: ", scenes)
       )
-    
+
     visNetwork(nodes, edges, width = "100%", height = "420px") %>%
       visNodes(shape = "dot", font = list(size = 14, color = "#222"),
                borderWidth = 1.5) %>%
@@ -296,17 +338,17 @@ server <- function(input, output, session) {
       visLayout(randomSeed = 42) %>%
       visInteraction(navigationButtons = TRUE, tooltipDelay = 100)
   })
-  
+
   output$timelinePlot <- renderPlot({
     pd <- play_data()
     req(!is.null(pd))
-    
+
     cur_sc   <- min(input$scene, pd$n_scenes)
     appeared <- pd$lines %>%
       filter(scene <= cur_sc) %>%
       distinct(speaker) %>%
       pull(speaker)
-    
+
     pd$timeline %>%
       mutate(appeared = speaker %in% appeared) %>%
       ggplot(aes(scene, speaker)) +
@@ -316,20 +358,66 @@ server <- function(input, output, session) {
                  linetype = "dashed", linewidth = 0.8) +
       scale_colour_manual(
         values = c("TRUE" = "#4e79a7", "FALSE" = "#cccccc"),
-        labels = c("TRUE" = "Active", "FALSE" = "Not yet"),
         name   = NULL
       ) +
       scale_size_continuous(range = c(1, 5), guide = "none") +
       scale_x_continuous(breaks = scales::pretty_breaks(n = 8)) +
       labs(x = "Scene", y = NULL,
-           title   = "Character appearances across scenes",
+           title   = "Appearances by scene",
            caption = "Point size = number of lines · red line = current scene") +
       theme_minimal(base_size = 13) +
       theme(panel.grid.minor = element_blank(),
-            legend.position  = "top",
+            legend.position  = "none",
             plot.title       = element_text(face = "bold"),
             axis.text.y      = element_text(size = 10))
   })
+
+  # ── PNG export: network (JS canvas grab) ─────────────────────────────────
+  observeEvent(input$exportNetwork, {
+    session$sendCustomMessage(
+      "downloadNetwork",
+      paste0("character_network_scene", input$scene, ".png")
+    )
+  })
+
+  # ── PNG export: timeline (server-side ggsave) ─────────────────────────────
+  output$exportTimeline <- downloadHandler(
+    filename = function() {
+      paste0("character_timeline_scene", input$scene, ".png")
+    },
+    content = function(file) {
+      pd <- play_data()
+      if (is.null(pd)) return(invisible(NULL))
+      cur_sc   <- min(input$scene, pd$n_scenes)
+      appeared <- pd$lines %>%
+        filter(scene <= cur_sc) %>%
+        distinct(speaker) %>%
+        pull(speaker)
+      p <- pd$timeline %>%
+        mutate(appeared = speaker %in% appeared) %>%
+        ggplot(aes(scene, speaker)) +
+        geom_path(aes(group = scene), colour = "grey70", linewidth = 0.4) +
+        geom_point(aes(colour = appeared, size = n), alpha = 0.85) +
+        geom_vline(xintercept = cur_sc, colour = "#e15759",
+                   linetype = "dashed", linewidth = 0.8) +
+        scale_colour_manual(
+          values = c("TRUE" = "#4e79a7", "FALSE" = "#cccccc"),
+          name   = NULL
+        ) +
+        scale_size_continuous(range = c(1, 5), guide = "none") +
+        scale_x_continuous(breaks = scales::pretty_breaks(n = 8)) +
+        labs(x = "Scene", y = NULL,
+             title   = "Appearances by scene",
+             caption = "Point size = number of lines · red line = current scene") +
+        theme_minimal(base_size = 13) +
+        theme(panel.grid.minor = element_blank(),
+              legend.position  = "none",
+              plot.title       = element_text(face = "bold"),
+              axis.text.y      = element_text(size = 10))
+      ggsave(file, plot = p, device = "png",
+             width = 10, height = 8, dpi = 150, bg = "white")
+    }
+  )
 }
 
 # ── Launch ────────────────────────────────────────────────────────────────────
