@@ -1,5 +1,5 @@
 # Shakespeare Character Networks
-# Single-file Shiny app — run with: shiny::runApp("path/to/folder/Shakespeare_network.R")
+# Single-file Shiny app — run with: shiny::runApp("app.R")
 
 # ── Auto-install missing packages ─────────────────────────────────────────────
 required_packages <- c(
@@ -63,7 +63,7 @@ parse_play <- function(raw_lines) {
       )),
       scene = cumsum(is_scene)
     ) %>%
-    filter(!is_scene, raw != "", !str_detect(raw, "^\\s*\\[")) %>%
+    filter(!is_scene, scene > 0, raw != "", !str_detect(raw, "^\\s*\\[")) %>%
     mutate(
       speaker_raw = str_match(raw, "^([A-Z][A-Z ]{1,30}[A-Z])[.:]")[, 2],
       dialogue    = str_replace(raw, "^[A-Z][A-Z ]{1,30}[A-Z][.:]\\s*", "")
@@ -74,7 +74,7 @@ parse_play <- function(raw_lines) {
       speaker = str_squish(speaker_raw),
       speaker = if_else(
         str_detect(speaker, regex(
-          "^(ALL|BOTH|CHORUS|PROLOGUE|EPILOGUE|SCENE|ACT|EXEUNT|EXIT|ENTER)$"
+          "^(ALL|BOTH|CHORUS|PROLOGUE|EPILOGUE|SCENE|EXEUNT|EXIT|ENTER)$|^ACT\\s+[IVXLC0-9]|\\bS$|ORCHARD|HOUSE|STREET|ROOM|GARDEN|COURT|FOREST|CAMP|FIELD|PALACE|CHURCH|PRISON|HALL|TOWER|CASTLE|TENT|ANTE"
         )),
         NA_character_, speaker
       )
