@@ -48,22 +48,38 @@ SHAKESPEARE_PLAYS <- c(
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 parse_play <- function(raw_lines) {
-  # Scene headers vary across Gutenberg editions:
-  #   "SCENE I."        (all-caps, own line)       — e.g. Macbeth 1533
-  #   "Scene I."        (title-case, own line)      — e.g. Hamlet 1524
-  #   "  Scene I. ..."  (indented, location follows on same line)
-  #   "ACT I"           (act-only lines — NOT a scene boundary on their own)
-  # Strategy: treat any line whose first non-space token is SCENE/Scene
-  # as a scene boundary.  ACT-only lines are not counted as scenes
-  # (they sit between scenes and would inflate the count to 5 for a 5-act play).
-  tibble(raw = raw_lines) %>%
+  # Strip Gutenberg preamble using the guaranteed START marker.
+  df <- tibble(raw = raw_lines)
+  start_marker <- which(str_detect(df$raw, fixed("*** START OF THE PROJECT GUTENBERG")))[1]
+  if (!is.na(start_marker)) df <- df %>% slice((start_marker + 1):n())
+
+  # After the START marker the file still contains: title reprint, table of
+  # contents, and dramatis personae. The ToC always begins with the first
+  # occurrence of "ACT I" (or "INDUCTION" for some plays). The real play body
+  # begins at the SECOND occurrence of "ACT I" — so we skip to that.
+  # For plays with an Induction (e.g. Taming of the Shrew) the second
+  # "ACT I" is still the correct anchor because the Induction scenes
+  # are listed in the ToC before it.
+  act_one_lines <- which(str_detect(str_trim(df$raw), regex(
+    "^act\\s+i\\.?$", ignore_case = TRUE
+  )))
+  anchor <- if (length(act_one_lines) >= 2) act_one_lines[2]
+         else if (length(act_one_lines) == 1) act_one_lines[1]
+         else 1L
+  df <- df %>% slice(anchor:n())
+
+  df <- df %>%
     mutate(
       is_scene = str_detect(raw, regex(
         "^\\s*scene\\s+[ivxlc0-9]+", ignore_case = TRUE
       )),
+      is_act2 = str_detect(str_trim(raw), regex(
+        "^act\\s+[ivxlc0-9]+\\.?$", ignore_case = TRUE
+      )),
       scene = cumsum(is_scene)
     ) %>%
-    filter(!is_scene, scene > 0, raw != "", !str_detect(raw, "^\\s*\\[")) %>%
+    filter(!is_scene, !is_act2, scene > 0, raw != "",
+           !str_detect(raw, "^\\s*\\[")) %>%
     mutate(
       speaker_raw = str_match(raw, "^([A-Z][A-Z ]{1,30}[A-Z])[.:]")[, 2],
       dialogue    = str_replace(raw, "^[A-Z][A-Z ]{1,30}[A-Z][.:]\\s*", "")
