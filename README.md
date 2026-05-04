@@ -6,6 +6,8 @@ An interactive R Shiny app that visualises character co-occurrence networks for 
 ![Shiny](https://img.shields.io/badge/Shiny-latest-blue)
 ![License](https://img.shields.io/badge/license-CC%20BY--NC--ND%204.0-lightgrey)
 
+---
+
 ## Features
 
 - **15 plays** selectable from a dropdown — tragedies, comedies, and histories
@@ -16,18 +18,22 @@ An interactive R Shiny app that visualises character co-occurrence networks for 
 - **Character timeline**: dotplot showing who appears when, coloured by whether they have appeared yet at the current scene
 - **Auto-installs** any missing R packages on first run
 
+---
+
 ## Quick start
 
 ```r
-# 1. Clone the repo
-# git clone https://github.com/YOUR_USERNAME/shakespeare-networks.git
-
-# 2. Open app.R in RStudio and click "Run App"
-#    — or from the R console:
-shiny::runApp("app.R")
+install.packages("shiny")
+shiny::runGitHub("shakespeare-character-network", "GuillaumeDesa")
 ```
 
-Missing packages are installed automatically on first run.
+Missing packages are installed automatically on first run. If you prefer a local copy:
+
+```r
+shiny::runApp("path/to/Shakespeare_network.R")
+```
+
+---
 
 ## How to read the network
 
@@ -39,6 +45,8 @@ Missing packages are installed automatically on first run.
 | **Scene slider** | The network is cumulative: it shows all co-occurrences up to and including the selected scene |
 | **Edge filter slider** | Only show pairs who have shared at least *N* scenes — raise this to tame late-play hairballs |
 
+---
+
 ## Plays included
 
 | Title | Gutenberg ID |
@@ -49,17 +57,19 @@ Missing packages are installed automatically on first run.
 | King Lear | 1532 |
 | A Midsummer Night's Dream | 1514 |
 | Romeo and Juliet | 1513 |
-| The Merchant of Venice | 2243 |
-| Much Ado About Nothing | 2269 |
+| The Merchant of Venice | 1515 |
+| Much Ado About Nothing | 1519 |
 | Twelfth Night | 1526 |
-| The Tempest | 23042 |
+| The Tempest | 1540 |
 | Julius Caesar | 1522 |
 | Antony and Cleopatra | 1534 |
-| Richard III | 1542 |
-| Henry V | 2253 |
+| Richard III | 1503 |
+| Henry V | 1521 |
 | The Taming of the Shrew | 1508 |
 
 To add a play, find its Gutenberg ID at [gutenberg.org](https://www.gutenberg.org) and append it to the `SHAKESPEARE_PLAYS` vector at the top of `app.R`.
+
+---
 
 ## Dependencies
 
@@ -77,6 +87,8 @@ All packages are installed automatically if missing. They are all available on C
 | `gutenbergr` | Project Gutenberg text download |
 | `igraph` | Graph metrics (degree, betweenness) |
 
+---
+
 ## Gutenberg mirror note
 
 `gutenbergr` selects a mirror automatically. If downloads fail (firewall, timeout), set a preferred mirror before launching:
@@ -86,13 +98,19 @@ options(gutenbergr_mirror = "https://gutenberg.pglaf.org")
 shiny::runApp("app.R")
 ```
 
+---
+
 ## Parsing note
 
 Gutenberg plain-text Shakespeare plays use the convention `SPEAKER. dialogue` or `SPEAKER: dialogue` with speaker names in ALL CAPS. The `parse_play()` function in `app.R` handles both separators, carries dialogue over continuation lines, and strips stage-direction tokens (`EXEUNT`, `EXIT`, `ENTER`, `ALL`, `BOTH`, etc.). Different editions may have idiosyncratic formatting; if a play parses poorly, inspect the raw Gutenberg text and adjust the speaker-detection regex in `parse_play()`.
 
+---
+
 ## History
 
 This app is a substantial rewrite of a 2015 Shiny sketch inspired by [David Robinson's](http://varianceexplained.org) original Macbeth analysis. The original used a single hand-edited plain-text file and `networkD3::simpleNetwork`. The current version fetches any play dynamically, replaces the network renderer with `visNetwork` (physics layout, tooltips, centrality encoding), and upgrades the UI to `bslib`.
+
+---
 
 ## License
 

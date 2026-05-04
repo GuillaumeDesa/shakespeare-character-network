@@ -34,14 +34,14 @@ SHAKESPEARE_PLAYS <- c(
   "King Lear"                   = 1532,
   "A Midsummer Night's Dream"   = 1514,
   "Romeo and Juliet"            = 1513,
-  "The Merchant of Venice"      = 2243,
-  "Much Ado About Nothing"      = 2269,
+  "The Merchant of Venice"      = 1515,
+  "Much Ado About Nothing"      = 1519,
   "Twelfth Night"               = 1526,
-  "The Tempest"                 = 23042,
+  "The Tempest"                 = 1540,
   "Julius Caesar"               = 1522,
   "Antony and Cleopatra"        = 1534,
-  "Richard III"                 = 1542,
-  "Henry V"                     = 2253,
+  "Richard III"                 = 1503,
+  "Henry V"                     = 1521,
   "The Taming of the Shrew"     = 1508
 )
 
