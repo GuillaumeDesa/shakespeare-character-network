@@ -6,8 +6,6 @@ An interactive R Shiny app that visualises character co-occurrence networks for 
 ![Shiny](https://img.shields.io/badge/Shiny-latest-blue)
 ![License](https://img.shields.io/badge/license-CC%20BY--NC--ND%204.0-lightgrey)
 
----
-
 ## Features
 
 - **15 plays** selectable from a dropdown — tragedies, comedies, and histories
@@ -17,8 +15,6 @@ An interactive R Shiny app that visualises character co-occurrence networks for 
 - **Interactive graph**: drag nodes, hover for statistics, highlight neighbourhoods
 - **Character timeline**: dotplot showing who appears when, coloured by whether they have appeared yet at the current scene
 - **Auto-installs** any missing R packages on first run
-
----
 
 ## Quick start
 
@@ -33,8 +29,6 @@ Missing packages are installed automatically on first run. If you prefer a local
 shiny::runApp("path/to/Shakespeare_network.R")
 ```
 
----
-
 ## How to read the network
 
 | Visual property | Meaning |
@@ -44,8 +38,6 @@ shiny::runApp("path/to/Shakespeare_network.R")
 | Edge **thickness** | Number of scenes shared by the two characters |
 | **Scene slider** | The network is cumulative: it shows all co-occurrences up to and including the selected scene |
 | **Edge filter slider** | Only show pairs who have shared at least *N* scenes — raise this to tame late-play hairballs |
-
----
 
 ## Plays included
 
@@ -69,8 +61,6 @@ shiny::runApp("path/to/Shakespeare_network.R")
 
 To add a play, find its Gutenberg ID at [gutenberg.org](https://www.gutenberg.org) and append it to the `SHAKESPEARE_PLAYS` vector at the top of `app.R`.
 
----
-
 ## Dependencies
 
 All packages are installed automatically if missing. They are all available on CRAN.
@@ -87,8 +77,6 @@ All packages are installed automatically if missing. They are all available on C
 | `gutenbergr` | Project Gutenberg text download |
 | `igraph` | Graph metrics (degree, betweenness) |
 
----
-
 ## Gutenberg mirror note
 
 `gutenbergr` selects a mirror automatically. If downloads fail (firewall, timeout), set a preferred mirror before launching:
@@ -98,19 +86,13 @@ options(gutenbergr_mirror = "https://gutenberg.pglaf.org")
 shiny::runApp("app.R")
 ```
 
----
-
 ## Parsing note
 
 Gutenberg plain-text Shakespeare plays use the convention `SPEAKER. dialogue` or `SPEAKER: dialogue` with speaker names in ALL CAPS. The `parse_play()` function in `app.R` handles both separators, carries dialogue over continuation lines, and strips stage-direction tokens (`EXEUNT`, `EXIT`, `ENTER`, `ALL`, `BOTH`, etc.). Different editions may have idiosyncratic formatting; if a play parses poorly, inspect the raw Gutenberg text and adjust the speaker-detection regex in `parse_play()`.
 
----
-
 ## History
 
 This app is a substantial rewrite of a 2015 Shiny sketch inspired by [David Robinson's](http://varianceexplained.org) original Macbeth analysis. The original used a single hand-edited plain-text file and `networkD3::simpleNetwork`. The current version fetches any play dynamically, replaces the network renderer with `visNetwork` (physics layout, tooltips, centrality encoding), and upgrades the UI to `bslib`.
-
----
 
 ## License
 
