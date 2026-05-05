@@ -8,7 +8,7 @@ abstract: >
   via the gutenbergr package. The network renderer uses visNetwork with
   Barnes-Hut physics and encodes degree and betweenness centrality visually.
 license: CC-BY-NC-ND-4.0
-repository-code: "https://github.com/YOUR_USERNAME/shakespeare-networks"
+repository-code: "https://github.com/GuillaumeDesa/shakespeare-networks"
 keywords:
   - Shakespeare
   - character networks
@@ -19,7 +19,7 @@ keywords:
   - Shiny
   - visualisation
 authors:
-  - name: "YOUR NAME"
+  - name: "Guillaume Desagulier"
     # orcid: "https://orcid.org/0000-0000-0000-0000"
 date-released: "2025"
 references:
