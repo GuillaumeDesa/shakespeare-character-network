@@ -57,6 +57,7 @@ shiny::runApp("path/to/Shakespeare_network.R")
 | Antony and Cleopatra | 1534 |
 | Richard III | 1503 |
 | Henry V | 1521 |
+| Titus Andronicus | 1507 |
 | The Taming of the Shrew | 1508 |
 
 To add a play, find its Gutenberg ID at [gutenberg.org](https://www.gutenberg.org) and append it to the `SHAKESPEARE_PLAYS` vector at the top of `app.R`.
