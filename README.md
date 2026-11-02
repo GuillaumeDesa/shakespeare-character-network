@@ -26,7 +26,7 @@ shiny::runGitHub("shakespeare-character-network", "GuillaumeDesa")
 Missing packages are installed automatically on first run. If you prefer a local copy:
 
 ```r
-shiny::runApp("path/to/Shakespeare_network.R")
+shiny::runApp("path/to/app.R")
 ```
 
 ## How to read the network
